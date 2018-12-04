@@ -1,6 +1,28 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn } from '@angular/forms';
 import { Customer } from '../customer';
+import { debounceTime } from 'rxjs/operators';
+
+function ratingRange(min: number, max: number): ValidatorFn {
+  return (c: AbstractControl): {[ key: string ]: boolean } | null => {
+    if(c.value !== null && (isNaN(c.value) || c.value < min || c.value > max)) {
+      return { 'range' : true };
+    }
+    return null;
+  }
+}
+
+function emailMatcher(c: AbstractControl): {[key:string]: boolean} | null {
+  const emailControl = c.get('email');
+  const confirmControl = c.get('confirmEmail');
+  if(emailControl.pristine || confirmControl.pristine) {
+    return null;
+  }
+  if(emailControl.value == confirmControl.value) {
+    return null;
+  }
+  return {'match': true};
+}
 
 @Component({
   selector: 'app-customer',
@@ -10,6 +32,12 @@ import { Customer } from '../customer';
 export class CustomerComponent implements OnInit {
 customerForm: FormGroup;
 customer: Customer = new Customer();
+emailMessage: string;
+
+private validationMessages = {
+  required: 'Please enter your email address.',
+  email: 'Please enter a valid email address.'
+};
 
   constructor(private fb: FormBuilder) { }
 
@@ -17,11 +45,37 @@ customer: Customer = new Customer();
     this.customerForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(3)]],
       lastName: ['', [Validators.required, Validators.maxLength(50)]],
-      email: ['', [Validators.required, Validators.email]],
+      emailGroup: this.fb.group({
+        email: ['', [Validators.required, Validators.email]],
+        confirmEmail: ['', [Validators.required]],
+      }, { validator: emailMatcher}),
       phone: '',
       notification: 'email',
-      sendCatalog: true
+      rating: [null, ratingRange(1, 5)],
+      sendCatalog: true,
+      addressType: 'home',
+      streetAddress: '',
+      city: '',
+      state: '',
+      zip: ''
     });
+
+    this.customerForm.get('notification').valueChanges.subscribe(
+      value => this.setNotification(value)
+    );
+
+    const emailControl = this.customerForm.get('emailGroup.email');
+    emailControl.valueChanges.pipe(debounceTime(500)).subscribe(
+      value => this.setMessage(emailControl)
+    );
+  }
+
+  setMessage(c: AbstractControl) {
+    this.emailMessage = '';
+    if((c.touched || c.dirty) && c.errors) {
+      this.emailMessage = Object.keys(c.errors).map(
+        key => this.emailMessage += this.validationMessages[key]).join('');
+    }
   }
 
   setNotification(notifyVia: string) {

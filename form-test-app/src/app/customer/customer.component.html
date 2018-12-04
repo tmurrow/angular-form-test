@@ -1,6 +1,6 @@
 <div class="container">
   <h1>Test Form</h1>
-
+<!-- Name -->
   <form (ngSubmit)="save()" [formGroup]="customerForm">
     <div class="form-group">
       <label for="firstName">First Name</label>
@@ -16,10 +16,28 @@
       <input id="lastName" type="text" placeholder="Last Name (required)" class="form-control" formControlName="lastName">
       <div></div>
     </div>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="Email (required)" class="form-control" formControlName="email">
+<!-- Emails -->
+    <div formGroupName="emailGroup">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="Email (required)" class="form-control" formControlName="email"
+        [ngClass]="{'is-invalid' : emailMessage }">
+        <div class="invalid-feedback">{{emailMessage}}</div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Email</label>
+        <input type="email" class="form-control" placeholder="Confirm Email (required)" formControlName="confirmEmail"
+        [ngClass]="{'is-invalid' : customerForm.get('emailGroup').errors ||
+        ((customerForm.get('emailGroup.confirmEmail').touched ||
+        customerForm.get('emailGroup.confirmEmail').dirty) &&
+        !customerForm.get('emailGroup.confirmEmail').valid) }">
+        <div class="invalid-feedback">
+          <span *ngIf="customerForm.get('emailGroup.confirmEmail').errors?.required">Please confirm your email.</span>
+          <span *ngIf="customerForm.get('emailGroup').errors?.match">Emails do not match.</span>
+        </div>
+      </div>
     </div>
+<!-- Phone -->
     <div class="form-group">
       <label>Phone</label>
       <input type="tel" class="form-control" placeholder="Phone" formControlName="phone"
@@ -28,20 +46,29 @@
         <span *ngIf="customerForm.get('phone').errors?.required">Please enter your phone number.</span>
       </div>
     </div>
-
+<!-- Send notifications -->
     <div class="form-group">
       <label>Send Notifications</label>
       <div class="form-check">
-        <input class="form-check-input" type="radio" id="email-notification" formControlName="notification" value="email" (click)="setNotification('email')">
+        <input class="form-check-input" type="radio" id="email-notification" formControlName="notification" value="email">
         <label class="form-check-label" for="email-notification">
           Email
         </label>
       </div>
       <div class="form-check">
-        <input class="form-check-input" type="radio" id="text-notification" formControlName="notification" value="text" (click)="setNotification('text')">
+        <input class="form-check-input" type="radio" id="text-notification" formControlName="notification" value="text">
         <label class="form-check-label" for="text-notification">
           Text
         </label>
+      </div>
+    </div>
+<!-- Rating -->
+    <div class="form-group">
+      <label for="rating">Rating</label>
+      <input type="number" class="form-control" formControlName="rating"
+      [ngClass]="{'is-invalid' : (customerForm.get('rating').touched || customerForm.get('rating').dirty) && !customerForm.get('rating').valid }">
+      <div class="invalid-feedback">
+        <span *ngIf="customerForm.get('rating').errors?.range">Please rate your experience from 1 to 5.</span>
       </div>
     </div>
 
@@ -53,13 +80,52 @@
         </label>
       </div>
     </div>
+<!-- Addresses -->
+    <div *ngIf="customerForm.get('sendCatalog').value">
+      <label>Address Type</label>
+      <div class="form-group">
+        <div class="form-check">
+          <input type="radio" class="form-check-input" id="home" value="home" formControlName="addressType">
+          <label for="home" class="form-check-label">Home</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" id="work" value="work" formControlName="addressType">
+          <label for="work" class="form-check-label">Work</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" id="other" value="other" formControlName="addressType">
+          <label for="other" class="form-check-label">Other</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Street Address</label>
+      <input type="text" placeholder="Street Address" class="form-control" formControlName="streetAddress">
+    </div>
+    <div class="form-row">
+      <div class="form-group col-6">
+        <label>City</label>
+        <input type="text" placeholder="City" class="form-control" formControlName="city">
+      </div>
+      <div class="form-group col-3">
+        <label>State</label>
+        <input type="text" placeholder="State" class="form-control" formControlName="state">
+      </div>
+      <div class="form-group col-3">
+        <label>Zip</label>
+        <input type="text" placeholder="Zip" class="form-control" formControlName="zip">
+      </div>
+    </div>
+
+
     <button class="btn btn-primary" type="submit" [disabled]="!customerForm.valid"
     [title]="customerForm.valid ? 'Save your entered data' : 'Disabled until the form data is valid'">
       Save
     </button>
     <button class="btn btn-outline-secondary ml-2" type="button" (click)="populateTestData()">Test Data</button>
   </form>
-
+<!-- Output -->
   <hr>
   <div class="card bg-light mb-3">
     <div class="card-body">
